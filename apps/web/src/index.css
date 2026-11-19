@@ -1,0 +1,59 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #070a08;
+  --bg-secondary: #0b100c;
+  --surface: #0d140f;
+
+  --primary: #00d51b;
+  --primary-light: #39f34b;
+  --primary-dark: #087510;
+
+  --text-primary: #e8f5e9;
+  --text-secondary: #a3b7a5;
+  --text-muted: #6f8572;
+
+  --border: rgba(111, 160, 117, 0.18);
+  --border-green: rgba(0, 213, 27, 0.4);
+
+  --critical: #ff3b45;
+  --high: #ff8738;
+  --medium: #f2c94c;
+  --low: #39d98a;
+
+  --font-primary: 'Poppins', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: 14px;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--bg);
+}

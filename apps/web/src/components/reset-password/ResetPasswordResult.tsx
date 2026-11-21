@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FiAlertTriangle, FiArrowLeft, FiCheck } from "react-icons/fi";
+
 import DottedBG from "../../assets/images/DottedBG.webp";
 
 export type ResetResultStatus = "success" | "expired";
@@ -31,6 +32,7 @@ function ResetPasswordResult({ status }: ResetPasswordResultProps) {
         <img
           src={DottedBG}
           alt=""
+          aria-hidden="true"
           className="h-auto w-full select-none object-contain opacity-40"
         />
       </div>

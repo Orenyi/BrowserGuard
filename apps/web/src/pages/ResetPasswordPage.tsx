@@ -8,6 +8,8 @@ import ResetPasswordResult, {
   type ResetResultStatus,
 } from "../components/reset-password/ResetPasswordResult";
 
+import { resetUserPassword } from "../services/auth.service";
+
 import DottedBG from "../assets/images/DottedBG.webp";
 
 interface ResetPasswordPageProps {
@@ -41,14 +43,13 @@ function ResetPasswordPage({ onResetPassword }: ResetPasswordPageProps) {
       return;
     }
 
-    if (!onResetPassword) {
-      throw new Error(
-        "Password reset is not connected yet. Please try again later.",
-      );
-    }
-
     try {
-      await onResetPassword(token, password);
+      if (onResetPassword) {
+        await onResetPassword(token, password);
+      } else {
+        await resetUserPassword({ token, password });
+      }
+
       setResult("success");
     } catch (error) {
       if (isExpiredResetError(error)) {
@@ -59,12 +60,10 @@ function ResetPasswordPage({ onResetPassword }: ResetPasswordPageProps) {
     }
   };
 
-  // Show success or expired-link result.
   if (result) {
     return <ResetPasswordResult status={result} />;
   }
 
-  // Missing token means the reset link cannot be used.
   if (!token) {
     return <ResetPasswordResult status="expired" />;
   }

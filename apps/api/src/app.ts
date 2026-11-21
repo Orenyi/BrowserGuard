@@ -87,13 +87,12 @@ app.use(helmet());
 //
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: trustedOrigin,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "X-CSRF-Token"],
   }),
 );
-
 //
 // 3. Request body parsing
 //

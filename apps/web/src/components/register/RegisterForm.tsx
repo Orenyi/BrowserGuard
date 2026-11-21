@@ -1,16 +1,14 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff, FiLock, FiMail, FiUser } from "react-icons/fi";
 
 import Logo from "../common/Logo";
 
-interface RegisterCredentials {
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  acceptedTerms: boolean;
-}
+import { registerUser } from "../../services/auth.service";
+import { ApiError } from "../../services/api";
+import { useAuth } from "../../hooks/useAuth";
+
+import type { RegisterCredentials } from "../../types/auth.types";
 
 interface RegisterFormProps {
   onSubmit?: (credentials: RegisterCredentials) => Promise<void>;
@@ -52,6 +50,9 @@ function getPasswordStrength(password: string) {
 }
 
 function RegisterForm({ onSubmit }: RegisterFormProps) {
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,6 +91,14 @@ function RegisterForm({ onSubmit }: RegisterFormProps) {
       nextErrors.password = "Password is required.";
     } else if (password.length < 8) {
       nextErrors.password = "Password must contain at least 8 characters.";
+    } else if (
+      !/[a-z]/.test(password) ||
+      !/[A-Z]/.test(password) ||
+      !/\d/.test(password) ||
+      !/[^A-Za-z0-9]/.test(password)
+    ) {
+      nextErrors.password =
+        "Include uppercase, lowercase, a number and a special character.";
     }
 
     if (!confirmPassword) {
@@ -118,27 +127,35 @@ function RegisterForm({ onSubmit }: RegisterFormProps) {
 
     if (Object.keys(nextErrors).length > 0) return;
 
-    if (!onSubmit) {
-      setFormError(
-        "Registration is not connected yet. Please try again later.",
-      );
-      return;
-    }
+    setIsSubmitting(true);
 
     try {
-      setIsSubmitting(true);
-
-      await onSubmit({
-        fullName: fullName.trim(),
+      const credentials: RegisterCredentials = {
+        displayName: fullName.trim(),
         email: email.trim(),
         password,
         confirmPassword,
-        acceptedTerms,
-      });
-    } catch {
-      setFormError(
-        "Unable to create your account. Please check your details and try again.",
-      );
+        acceptTerms: acceptedTerms,
+      };
+
+      if (onSubmit) {
+        await onSubmit(credentials);
+      } else {
+        const authenticatedUser = await registerUser(credentials);
+        setUser(authenticatedUser);
+      }
+
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setFormError(error.message);
+      } else if (error instanceof Error) {
+        setFormError(error.message);
+      } else {
+        setFormError(
+          "Unable to create your account. Please check your details and try again.",
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -330,7 +347,7 @@ function RegisterForm({ onSubmit }: RegisterFormProps) {
               disabled={isSubmitting}
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
-              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] disabled:opacity-50"
             >
               {showPassword ? (
                 <FiEyeOff size={17} aria-hidden="true" />
@@ -452,7 +469,7 @@ function RegisterForm({ onSubmit }: RegisterFormProps) {
                   : "Show confirm password"
               }
               aria-pressed={showConfirmPassword}
-              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] disabled:opacity-50"
             >
               {showConfirmPassword ? (
                 <FiEyeOff size={17} aria-hidden="true" />

@@ -2,6 +2,9 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { FiArrowLeft, FiMail } from "react-icons/fi";
 
+import { ApiError } from "../../services/api";
+import { requestPasswordReset } from "../../services/auth.service";
+
 interface ForgotPasswordFormProps {
   onSubmit?: (email: string) => Promise<void>;
   onSuccess: (email: string) => void;
@@ -42,26 +45,26 @@ function ForgotPasswordForm({ onSubmit, onSuccess }: ForgotPasswordFormProps) {
     }
 
     setEmailError("");
+    setIsSubmitting(true);
 
-    if (!onSubmit) {
-      setFormError(
-        "Password recovery is not connected yet. Please try again later.",
-      );
-      return;
-    }
+    const normalizedEmail = email.trim();
 
     try {
-      setIsSubmitting(true);
+      if (onSubmit) {
+        await onSubmit(normalizedEmail);
+      } else {
+        await requestPasswordReset({ email: normalizedEmail });
+      }
 
-      const normalizedEmail = email.trim();
-      await onSubmit(normalizedEmail);
       onSuccess(normalizedEmail);
     } catch (error) {
-      setFormError(
-        error instanceof Error
-          ? error.message
-          : "We couldn't process your request. Please try again.",
-      );
+      if (error instanceof ApiError) {
+        setFormError(error.message);
+      } else if (error instanceof Error) {
+        setFormError(error.message);
+      } else {
+        setFormError("We couldn't process your request. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

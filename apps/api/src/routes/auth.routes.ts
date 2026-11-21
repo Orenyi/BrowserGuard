@@ -34,6 +34,18 @@ const authLimiter = rateLimit({
   },
 });
 
+// Separate logout rate limiter
+const logoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many logout requests. Please try again later.",
+  },
+});
+
 // Registration
 router.post("/register", authLimiter, validateBody(registerSchema), register);
 
@@ -41,7 +53,7 @@ router.post("/register", authLimiter, validateBody(registerSchema), register);
 router.post("/login", authLimiter, validateBody(loginSchema), login);
 
 // Logout
-router.post("/logout", logout);
+router.post("/logout", logoutLimiter, logout);
 
 // Forgot password
 router.post(

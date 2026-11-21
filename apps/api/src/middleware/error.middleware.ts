@@ -2,6 +2,7 @@ import type { ErrorRequestHandler } from "express";
 
 type ApiError = Error & {
   statusCode?: number;
+  code?: string;
 };
 
 export const errorHandler: ErrorRequestHandler = (
@@ -19,5 +20,6 @@ export const errorHandler: ErrorRequestHandler = (
   res.status(statusCode).json({
     success: false,
     message: statusCode >= 500 ? "Internal server error" : error.message,
+    ...(error.code ? { code: error.code } : {}),
   });
 };

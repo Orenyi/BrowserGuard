@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
 
-interface LoginCredentials {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
+import { loginUser } from "../../services/auth.service";
+import { useAuth } from "../../hooks/useAuth";
+import { ApiError } from "../../services/api";
+
+import type { LoginCredentials } from "../../types/auth.types";
 
 interface LoginFormProps {
   onSubmit?: (credentials: LoginCredentials) => Promise<void>;
@@ -18,6 +18,9 @@ interface FormErrors {
 }
 
 function LoginForm({ onSubmit }: LoginFormProps) {
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -56,25 +59,33 @@ function LoginForm({ onSubmit }: LoginFormProps) {
 
     if (Object.keys(nextErrors).length > 0) return;
 
-    if (!onSubmit) {
-      setFormError(
-        "Sign-in is temporarily unavailable. Please try again later.",
-      );
-      return;
-    }
+    setIsSubmitting(true);
 
     try {
-      setIsSubmitting(true);
-
-      await onSubmit({
+      const credentials: LoginCredentials = {
         email: email.trim(),
         password,
         rememberMe,
-      });
-    } catch {
-      setFormError(
-        "Unable to sign in. Please check your email and password and try again.",
-      );
+      };
+
+      if (onSubmit) {
+        await onSubmit(credentials);
+      } else {
+        const authenticatedUser = await loginUser(credentials);
+        setUser(authenticatedUser);
+      }
+
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setFormError(error.message);
+      } else if (error instanceof Error) {
+        setFormError(error.message);
+      } else {
+        setFormError(
+          "Unable to sign in. Please check your details and try again.",
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -134,10 +145,12 @@ function LoginForm({ onSubmit }: LoginFormProps) {
               disabled={isSubmitting}
               onChange={(event) => {
                 setEmail(event.target.value);
+
                 setErrors((current) => ({
                   ...current,
                   email: undefined,
                 }));
+
                 setFormError("");
               }}
               aria-invalid={Boolean(errors.email)}
@@ -187,10 +200,12 @@ function LoginForm({ onSubmit }: LoginFormProps) {
               disabled={isSubmitting}
               onChange={(event) => {
                 setPassword(event.target.value);
+
                 setErrors((current) => ({
                   ...current,
                   password: undefined,
                 }));
+
                 setFormError("");
               }}
               aria-invalid={Boolean(errors.password)}
